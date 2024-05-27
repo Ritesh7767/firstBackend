@@ -33,7 +33,7 @@ const userSchema = new Schema({
     },
     watchHistory : [
         {
-            types : Schema.Types.ObjectId,
+            type : Schema.Types.ObjectId,
             ref : "Video"
         }
     ],
@@ -58,7 +58,7 @@ userSchema.pre("save", async function(next){
 })
 
 userSchema.methods.isPasswordCorrect = async function(password){
-    return await bcrypt.compare(password, this.passwor)
+    return await bcrypt.compare(password, this.password)
 }
 
 userSchema.methods.generateAccessToken = function(){
