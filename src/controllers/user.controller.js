@@ -141,3 +141,68 @@ export const accessRefreshToken = asyncHandler(async(req, res) => {
         throw new ApiError(500, "Something went wrong while refreshing access token")
     }
 })
+
+export const changeCurrentPassword = asyncHandler(async (req, res) => {
+    
+    const {oldPassword, newPassword} = req.body
+    let user = req.user
+
+    let existingUser = await User.findById(user._id)
+
+    let isPasswordCorrect = existingUser.isPasswordCorrect(oldPassword)
+
+    if(!isPasswordCorrect) throw new ApiError(400, "Password is invalid")
+
+    existingUser.password = newPassword
+    await existingUser.save({validateBeforeSave: false})
+
+    return res.status(200).json(new ApiResponse(200, "", "password has been changed"))
+})
+
+export const getCurrentUser = asyncHandler(async (req, res) => {
+    
+    let user = await User.findById(req.user._id)
+
+    return res.status(200).json(new ApiResponse(200, user, "current user details"))
+})
+
+export const updateAccount = asyncHandler(async (req, res) => {
+    
+    const {fullname, email} = req.body
+
+    if(!fullname && !email) throw new ApiError("values not found")
+    
+    let user = await User.findByIdAndUpdate(req.user?._id, {$set : {fullname, email}}, {new : true}).select("-password -refreshToken")
+
+    return res.status(200).json(new ApiResponse(200, user, 'User details updated'))
+})
+
+export const updateUserAvatar = asyncHandler(async (req, res) => {
+    
+    let avatarLocalFile = req.file?.path
+
+    if(!avatarLocalFile) throw new ApiError(400, "Avatar file is missing")
+    
+    const avatar = await uploadFile(avatarLocalFile)
+
+    if(!avatar.url) throw new ApiError(500, "Something went wrong while uploading avatar")
+
+    let user = await User.findByIdAndUpdate(req.user?._id, {$set : {avatar : avatar.url}}, {new : true}).select('-password -refreshToken')
+
+    return res.status(200, "Avatar updated").json(new ApiResponse(200, user, 'Avatar updated'))
+})
+
+export const updateUserCoverImage = asyncHandler(async (req, res) => {
+
+    const {coverImageLocalFile} = req.file?.path
+
+    if(!coverImageLocalFile) throw new ApiError(400, "CoverImage not found")
+
+    const coverImage = await uploadFile(coverImageLocalFile)
+
+    if(!coverImage) throw new ApiError(500, 'Something went wrong while uploading coverImage')
+
+    let user = await User.findByIdAndUpdate(req.user?._id, {$set : {coverImage : coverImage.url}}, {new : true}).select("-password -refreshToken")
+
+    return res.status(200, "CoverImage Changed Successfully").json(new ApiResponse(200, user, 'CoverImage Changed Successfully'))
+})

@@ -11,6 +11,10 @@ const subscriptionSchema = new mongoose.Schema({
             ref : "User"
         }
     ]
-})
+},
+    {
+        timestamps : true
+    }
+)
 
 export default Subscription = mongoose.model("Subscription", subscriptionSchema)
